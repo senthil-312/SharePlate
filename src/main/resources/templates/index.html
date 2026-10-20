@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePlate | Share More, Waste Less</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/" class="brand">🍴 SharePlate</a>
+    <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#donate">+ Donate Food</a>
+        <a href="#available">Available Food</a>
+    </div>
+    <span class="nav-message">🌱 Reduce Waste · Share More</span>
+</nav>
+
+<header class="hero" id="home">
+    <div class="hero-content">
+        <span class="eyebrow">A LITTLE FOOD. A LOT OF GOOD.</span>
+        <h1>Good food deserves<br>
+            <span>another chance.</span>
+        </h1>
+        <p>Share surplus food with your campus community.
+            Reduce waste and make someone's day better.</p>
+        <a href="#donate" class="hero-button">Share Your Food ↗</a>
+        <div class="hero-stats">
+            <div><strong>♻️</strong><span>Less food waste</span></div>
+            <div><strong>💚</strong><span>A caring campus</span></div>
+            <div><strong>🍱</strong><span>Food for everyone</span></div>
+        </div>
+    </div>
+
+    <div class="hero-art">
+        <div class="art-circle"></div>
+        <div class="food-illustration">🥗</div>
+        <div class="floating-note">Made with care 💚</div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- Donate Food Section -->
+    <section class="donate-section" id="donate">
+        <div class="section-heading">
+            <div class="heading-icon">＋</div>
+            <div>
+                <h2>Donate food</h2>
+                <p>Have extra food? Someone nearby might need it.</p>
+            </div>
+        </div>
+
+        <form action="/add" method="post" class="donate-form">
+            <div class="field">
+                <label for="foodName">Food name</label>
+                <input id="foodName" type="text" name="foodName"
+                       placeholder="e.g. Vegetable Rice" required>
+            </div>
+
+            <div class="field">
+                <label for="quantity">Quantity (portions)</label>
+                <input id="quantity" type="number" name="quantity"
+                       placeholder="e.g. 5" min="1" required>
+            </div>
+
+            <div class="field">
+                <label for="location">Pickup location</label>
+                <input id="location" type="text" name="location"
+                       placeholder="e.g. College Canteen" required>
+            </div>
+
+            <div class="field">
+                <label for="expiryTime">Expiry time</label>
+                <input id="expiryTime" type="datetime-local"
+                       name="expiryTime" required>
+            </div>
+
+            <button type="submit" class="primary-button">
+                ✈ Donate Food
+            </button>
+        </form>
+    </section>
+
+    <!-- Available Food Section -->
+    <section class="available-section" id="available">
+        <div class="section-heading listing-heading">
+            <div>
+                <span class="eyebrow">SHARING IS CARING</span>
+                <h2>Available food <span class="leaf">✳</span></h2>
+                <p>Discover food shared by your campus community.</p>
+            </div>
+
+            <div class="listing-count">
+                <span>🍱</span>
+                <div>
+                    <small>Total listings</small>
+                    <strong th:text="${#lists.size(foods)}">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display when there are no food listings -->
+        <div class="empty-state" th:if="${#lists.isEmpty(foods)}">
+            <div class="empty-icon">🥗</div>
+            <h3>Your campus sharing journey starts here!</h3>
+            <p>No food listings yet. Be the first to share something good.</p>
+            <a href="#donate" class="primary-button link-button">
+                + Donate the first meal
+            </a>
+        </div>
+
+        <!-- Food Cards -->
+        <div class="food-grid" th:unless="${#lists.isEmpty(foods)}">
+            <article class="food-card" th:each="food : ${foods}">
+
+                <div class="food-card-top">
+                    <div class="food-art">🍱</div>
+
+                    <span class="status-badge"
+                          th:text="${food.status}"
+                          th:classappend="${food.status == 'AVAILABLE'}
+                              ? ' available' : ' other-status'">
+                        AVAILABLE
+                    </span>
+                </div>
+
+                <div class="food-card-body">
+                    <h3 th:text="${food.foodName}">Vegetable Rice</h3>
+
+                    <p class="detail">
+                        <span>📦</span>
+                        <span th:text="${food.quantity} + ' portions'">
+                            5 portions
+                        </span>
+                    </p>
+
+                    <p class="detail">
+                        <span>📍</span>
+                        <span th:text="${food.location}">
+                            College Canteen
+                        </span>
+                    </p>
+
+                    <p class="detail">
+                        <span>🕒</span>
+                        <span th:text="${#temporals.format(
+                            food.expiryTime, 'dd MMM yyyy, hh:mm a')}">
+                            Expiry time
+                        </span>
+                    </p>
+
+                    <!-- Claim Food: shown only when available -->
+                    <div th:if="${food.status == 'AVAILABLE'}"
+                         class="claim-section">
+
+                        <form th:action="@{/claim/{id}(id=${food.id})}"
+                              method="post"
+                              class="claim-form">
+
+                            <div class="field">
+                                <label>Your name</label>
+                                <input type="text"
+                                       name="studentName"
+                                       placeholder="Enter your name"
+                                       maxlength="100"
+                                       required>
+                            </div>
+
+                            <button type="submit"
+                                    class="primary-button">
+                                💚 Claim Food
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Show claimant when food is claimed -->
+                    <div th:if="${food.status == 'CLAIMED'}"
+                         class="claimed-info">
+                        <p>
+                            ✅ <strong>Food claimed</strong>
+                        </p>
+                        <p>
+                            Claimed by:
+                            <span th:text="${food.claimedBy}">
+                                Student name
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Delete Food Listing -->
+                    <form th:action="@{/delete/{id}(id=${food.id})}"
+                          method="post"
+                          onsubmit="return confirm('Delete this food listing?');">
+
+                        <button type="submit" class="delete-button">
+                            🗑 Delete listing
+                        </button>
+                    </form>
+
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Impact Banner -->
+    <section class="impact-banner">
+        <div class="impact-icon">🌍</div>
+        <div>
+            <h2>Small acts. Big impact.</h2>
+            <p>Every shared meal is a step towards a greener campus.</p>
+        </div>
+        <a href="#donate">Be part of the change ↗</a>
+    </section>
+
+</main>
+
+<footer>
+    <a href="/" class="brand">🍴 SharePlate</a>
+    <p>Made for a community that cares. 💚</p>
+    <small>Share more. Waste less. Make a difference.</small>
+</footer>
+
+</body>
+</html>
